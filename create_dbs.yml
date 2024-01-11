@@ -16,7 +16,7 @@
     community.postgresql.postgresql_db:
       name: "{{ item }}"
       state: "{{ db_state }}"
-      login_host: localhost
+      login_host: 127.0.0.1
       login_user: "user7UE"
       login_password: "oPgJTTu0hP57NBx2"
     with_items: "{{ students }}"
