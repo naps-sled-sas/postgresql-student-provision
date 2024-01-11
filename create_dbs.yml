@@ -2,8 +2,9 @@
   hosts: infra-vms-rhel9-fast-tapir
   become: true
   roles:
-    - linux-system-roles.postgresql
-        postgresql_password: "oPgJTTu0hP57NBx2"
+    - role: linux-system-roles.postgresql
+        vars:
+          postgresql_password: "oPgJTTu0hP57NBx2"
   vars:
     students:
       - charmander
