@@ -1,5 +1,5 @@
 - name: Create Student DBs
-  hosts: localhost
+  hosts: infra-vms-rhel9-fast-tapir
   vars:
     students:
       - charmander
