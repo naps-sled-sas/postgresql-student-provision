@@ -3,6 +3,7 @@
   become: true
   roles:
     - linux-system-roles.postgresql
+        postgresql_password: "oPgJTTu0hP57NBx2"
   vars:
     students:
       - charmander
@@ -16,6 +17,5 @@
     community.postgresql.postgresql_db:
       name: "{{ item }}"
       state: "{{ db_state }}"
-      login_user: "postgres"
       login_password: "oPgJTTu0hP57NBx2"
     with_items: "{{ students }}"
