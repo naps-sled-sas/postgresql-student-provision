@@ -1,5 +1,7 @@
 - name: Create Student DBs
   hosts: infra-vms-rhel9-fast-tapir
+  roles:
+    - linux-system-roles.postgresql
   vars:
     students:
       - charmander
@@ -7,12 +9,13 @@
       - bulbasaur
       - pikachu
     db_state: present
+
   tasks:
   - name: Create student databases
     community.postgresql.postgresql_db:
       name: "{{ item }}"
       state: "{{ db_state }}"
-      login_host: postgresql-demo
+      login_host: localhost
       login_user: "user7UE"
       login_password: "oPgJTTu0hP57NBx2"
     with_items: "{{ students }}"
