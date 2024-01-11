@@ -1,5 +1,5 @@
 - name: Create Student DBs
-  hosts: postgresql-demo
+  hosts: localhost
   vars:
     students:
       - charmander
