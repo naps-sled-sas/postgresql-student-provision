@@ -12,4 +12,7 @@
     community.postgresql.postgresql_db:
       name: "{{ item }}"
       state: "{{ db_state }}"
+      login_host: postgresql-demo
+      login_user: "user7UE"
+      login_password: "oPgJTTu0hP57NBx2"
     with_items: "{{ students }}"
