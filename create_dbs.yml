@@ -1,0 +1,15 @@
+- name: Create Student DBs
+  hosts: postgresql-demo
+  vars:
+    students:
+      - charmander
+      - squirtle
+      - bulbasaur
+      - pikachu
+    db_state: present
+  tasks:
+  - name: Create student databases
+    community.postgresql.postgresql_db:
+      name: "{{ item }}"
+      state: "{{ db_state }}"
+    with_items: "{{ students }}"
