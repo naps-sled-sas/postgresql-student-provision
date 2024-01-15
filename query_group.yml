@@ -7,6 +7,7 @@
       script: "(Get-ADGroupMember -Identity '{{ ad_group_name }}').samaccountname"
     register: ad_group_members
 
-  - name: debug
-    debug:
-      var: ad_group_members
+  - name: Set output as stat
+    ansible.builtin.set_stats:
+      data:
+        ad_group_members: ad_group_members.output
