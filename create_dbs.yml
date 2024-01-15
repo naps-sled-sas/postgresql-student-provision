@@ -2,11 +2,7 @@
   hosts: infra-vms-rhel9-fast-tapir
   become: true
   vars:
-    students:
-      - charmander
-      - squirtle
-      - bulbasaur
-      - pikachu
+    students: "{{ ad_group_members }}"
 
   tasks:
   - name: Collect all info
