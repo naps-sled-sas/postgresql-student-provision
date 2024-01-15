@@ -21,10 +21,10 @@
     community.postgresql.postgresql_user:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
-      db: "db-{{ item }}"
+      #db: "db-{{ item }}"
       name: "{{ item }}"
       password: "Password123!!"
-    when: db_state == "present"
+    #when: db_state == "present"
     with_items: "{{ students }}"
 
   - name: Grant student privs
