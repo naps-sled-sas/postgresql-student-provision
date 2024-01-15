@@ -12,9 +12,23 @@
   tasks:
   - name: Create student databases
     community.postgresql.postgresql_db:
-      name: "{{ item }}"
+      name: "db-{{ item }}"
       state: "{{ db_state }}"
       login_host: localhost
       login_user: postgres
       login_password: "oPgJTTu0hP57NBx2"
+    with_items: "{{ students }}"
+
+  - name: Create student users
+    community.postgresql.postgresql_user:
+      db: "db-{{ item }}"
+      name: "{{ item }}"
+      password: "Password123!!"
+    with_items: "{{ students }}"
+
+  - name: Grant student privs
+    community.postgresql.postgresql_privs:
+      db: "db-{{ item }}"
+      privs: ALL
+      role: "{{ item }}"
     with_items: "{{ students }}"
