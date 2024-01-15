@@ -9,11 +9,11 @@
       - pikachu
 
   tasks:
-  - name: Collect all info except databases
+  - name: Collect all info
     community.postgresql.postgresql_info:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
-      filter: "settings,roles" 
+      filter: "roles" 
 
   - name: Manage student databases
     community.postgresql.postgresql_db:
