@@ -1,8 +1,7 @@
 - name: Create Student DBs
   hosts: infra-vms-rhel9-fast-tapir
   become: true
-  roles:
-    - role: linux-system-roles.postgresql
+  become_user: postgresql
   vars:
     students:
       - charmander
