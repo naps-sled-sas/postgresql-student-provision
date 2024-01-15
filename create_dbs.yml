@@ -51,12 +51,12 @@
       roles_to_remove: "{{ roles_after_filter | difference(students) }}"
 
   - name: Remove unneeded databases
-      community.postgresql.postgresql_db:
-        login_user: "{{ login_user }}"
-        login_password: "{{ login_password }}"
-        name: "db-{{ item }}"
-        state: "absent"
-      with_items: "{{ roles_to_remove }}"
+    community.postgresql.postgresql_db:
+      login_user: "{{ login_user }}"
+      login_password: "{{ login_password }}"
+      name: "db-{{ item }}"
+      state: "absent"
+    with_items: "{{ roles_to_remove }}"
 
   - name: Manage student users
     community.postgresql.postgresql_user:
