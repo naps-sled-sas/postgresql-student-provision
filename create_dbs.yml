@@ -15,21 +15,6 @@
       login_password: "{{ login_password }}"
       filter: "roles"
     register: postgres_info
-    when: db_state == "absent"
-
-  - name: Omit postgres user
-    set_fact:
-      postgres_info: "{{ postgres_info | 'postgres' }}"
-    when: db_state == "absent"
-
-  - name: Diff users
-    set_fact:
-      students: "{{ postgres_info | students }}"
-    when: db_state == "absent"
-
-  - name: Display Diff
-    debug:
-      var: students
 
   - name: Manage student databases
     community.postgresql.postgresql_db:
