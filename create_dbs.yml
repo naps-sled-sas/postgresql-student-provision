@@ -1,7 +1,6 @@
 - name: Create Student DBs
   hosts: infra-vms-rhel9-fast-tapir
   become: true
-  become_user: postgresql
   vars:
     students:
       - charmander
@@ -19,3 +18,5 @@
       login_user: postgresql
       login_password: "oPgJTTu0hP57NBx2"
     with_items: "{{ students }}"
+    become_method: su
+    become_user: postgresql
