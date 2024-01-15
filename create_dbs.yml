@@ -10,12 +10,6 @@
     db_state: present
 
   tasks:
-  - name: Permit traffic for postgres
-    ansible.posix.firewalld:
-      port: 5432/tcp
-      permanent: true
-      state: enabled
-  
   - name: Create student databases
     community.postgresql.postgresql_db:
       login_user: "{{ login_user }}"
@@ -31,6 +25,7 @@
       db: "db-{{ item }}"
       name: "{{ item }}"
       password: "Password123!!"
+      state: "{{ db_state }}"
     with_items: "{{ students }}"
 
   - name: Grant student privs
