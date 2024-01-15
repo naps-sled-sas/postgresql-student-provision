@@ -1,6 +1,7 @@
 - name: Sync Student DBs
   hosts: infra-vms-rhel9-fast-tapir
   become: true
+  gather_facts: false
   vars:
     students: "{{ ad_group_members }}"
     roles_to_ignore:
