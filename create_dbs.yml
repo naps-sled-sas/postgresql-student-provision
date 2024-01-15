@@ -9,7 +9,11 @@
       - pikachu
 
   tasks:
-  - name: Create student databases
+  - name: Collect all info except databases
+    community.postgresql.postgresql_info:
+      filter: "settings,roles" 
+
+  - name: Manage student databases
     community.postgresql.postgresql_db:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
@@ -17,18 +21,16 @@
       state: "{{ db_state }}"
     with_items: "{{ students }}"
 
-  - name: Create student users
+  - name: Manage student users
     community.postgresql.postgresql_user:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
-      #db: "db-{{ item }}"
       name: "{{ item }}"
       password: "Password123!!"
       state: "{{ db_state }}"
-    #when: db_state == "present"
     with_items: "{{ students }}"
 
-  - name: Grant student privs
+  - name: Manage student privs
     community.postgresql.postgresql_privs:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
