@@ -24,7 +24,7 @@
       db: "db-{{ item }}"
       name: "{{ item }}"
       password: "Password123!!"
-      state: "{{ db_state }}"
+    when: db_state == "present"
     with_items: "{{ students }}"
 
   - name: Grant student privs
@@ -35,4 +35,5 @@
       privs: ALL
       role: "{{ item }}"
       obj: ALL_IN_SCHEMA
+    when: db_state == "present"
     with_items: "{{ students }}"
