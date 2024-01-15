@@ -3,15 +3,10 @@
   become: true
   vars:
     students: "{{ ad_group_members }}"
+    roles_to_ignore:
+      - "postgres"
 
   tasks:
-  - name: Collect all info
-    community.postgresql.postgresql_info:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
-      filter: "roles"
-    register: postgres_info
-
   - name: Manage student databases
     community.postgresql.postgresql_db:
       login_user: "{{ login_user }}"
@@ -39,3 +34,14 @@
       obj: ALL_IN_SCHEMA
     when: db_state == "present"
     with_items: "{{ students }}"
+
+  - name: Collect all info
+    community.postgresql.postgresql_info:
+      login_user: "{{ login_user }}"
+      login_password: "{{ login_password }}"
+      filter: "roles"
+    register: postgres_info
+
+  - name: Filter roles
+    ansible.builtin.set_fact:
+      roles_after_filter: {{ postgres_info.roles | difference(roles_to_ignore) }}
