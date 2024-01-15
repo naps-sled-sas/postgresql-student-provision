@@ -24,6 +24,7 @@
       #db: "db-{{ item }}"
       name: "{{ item }}"
       password: "Password123!!"
+      state: "{{ db_state }}"
     #when: db_state == "present"
     with_items: "{{ students }}"
 
