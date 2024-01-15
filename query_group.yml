@@ -1,0 +1,12 @@
+- name: Get AD group members
+  hosts: windc01.mikemitchell.info
+
+  tasks:
+  - name: Query group
+    ansible.windows.win_powershell:
+      script: "(Get-ADGroupMember -Identity '{{ ad_group_name }}').samaccountname"
+    register: ad_group_members
+
+  - name: debug
+    debug:
+      var: ad_group_members
