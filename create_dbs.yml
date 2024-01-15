@@ -47,4 +47,5 @@
       roles_after_filter: "{{ postgres_info.roles | difference(roles_to_ignore) }}"
 
   - name: Determine diff
+    ansible.builtin.set_fact:
       roles_to_remove: "{{ roles_after_filter | difference(students) }}"
