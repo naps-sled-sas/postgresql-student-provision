@@ -7,7 +7,6 @@
       - squirtle
       - bulbasaur
       - pikachu
-    db_state: present
 
   tasks:
   - name: Create student databases
