@@ -19,4 +19,7 @@
       login_password: "oPgJTTu0hP57NBx2"
     with_items: "{{ students }}"
     become_method: su
-    become_user: postgresql
+    become_user: postgres
+
+
+  "msg": "Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user (rc: 1, err: chmod: invalid mode: ‘A+user:postgresql:rx:allow’\nTry 'chmod --help' for more information.\n}). For information on working around this, see https://docs.ansible.com/ansible-core/2.15/playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user#risks-of-becoming-an-unprivileged-user",
