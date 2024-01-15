@@ -34,4 +34,5 @@
       db: "db-{{ item }}"
       privs: ALL
       role: "{{ item }}"
+      obj: ALL_IN_SCHEMA
     with_items: "{{ students }}"
