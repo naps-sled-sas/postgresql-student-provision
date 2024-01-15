@@ -11,6 +11,8 @@
   tasks:
   - name: Collect all info except databases
     community.postgresql.postgresql_info:
+      login_user: "{{ login_user }}"
+      login_password: "{{ login_password }}"
       filter: "settings,roles" 
 
   - name: Manage student databases
