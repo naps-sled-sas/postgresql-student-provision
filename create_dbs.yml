@@ -27,9 +27,9 @@
       students: "{{ postgres_info | students }}"
     when: db_state == "absent"
 
-    - name: Display Diff
-      debug:
-        var: students
+  - name: Display Diff
+    debug:
+      var: students
 
   - name: Manage student databases
     community.postgresql.postgresql_db:
