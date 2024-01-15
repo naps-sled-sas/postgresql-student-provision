@@ -12,7 +12,7 @@
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
       name: "db-{{ item }}"
-      state: "{{ db_state }}"
+      state: "present"
     with_items: "{{ students }}"
 
   - name: Manage student users
@@ -21,7 +21,7 @@
       login_password: "{{ login_password }}"
       name: "{{ item }}"
       password: "Password123!!"
-      state: "{{ db_state }}"
+      state: "present"
     with_items: "{{ students }}"
 
   - name: Manage student privs
@@ -32,7 +32,6 @@
       privs: ALL
       role: "{{ item }}"
       obj: ALL_IN_SCHEMA
-    when: db_state == "present"
     with_items: "{{ students }}"
 
   - name: Collect all info
