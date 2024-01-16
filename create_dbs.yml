@@ -8,7 +8,7 @@
       - "postgres"
 
   tasks:
-  - name: Manage student databases
+  - name: Add needed student databases
     community.postgresql.postgresql_db:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
@@ -16,7 +16,7 @@
       state: "present"
     with_items: "{{ students }}"
 
-  - name: Manage student users
+  - name: Add needed student users
     community.postgresql.postgresql_user:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
@@ -58,7 +58,7 @@
       state: "absent"
     with_items: "{{ roles_to_remove }}"
 
-  - name: Manage student users
+  - name: Remove unneeded student users
     community.postgresql.postgresql_user:
       login_user: "{{ login_user }}"
       login_password: "{{ login_password }}"
