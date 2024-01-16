@@ -1,5 +1,5 @@
 - name: Get AD group members
-  hosts: windc01.mikemitchell.info
+  hosts: activedirectory
   gather_facts: false
 
   tasks:

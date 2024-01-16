@@ -1,5 +1,5 @@
 - name: Sync Student DBs
-  hosts: infra-vms-rhel9-fast-tapir
+  hosts: postgresql
   become: true
   gather_facts: false
   vars:
