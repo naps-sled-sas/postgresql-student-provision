@@ -32,8 +32,8 @@
     - name: Execute the command in remote shell; stdout goes to the specified file on the remote
       ansible.builtin.shell: '/usr/pgadmin4/bin/setup-web.sh'
       environment:
-        PGADMIN_SETUP_PASSWORD: "user@email.com"
-        PGADMIN_SETUP_EMAIL: "{{ postgresql_password }}"
+        PGADMIN_SETUP_PASSWORD: "{{ postgresql_password }}"
+        PGADMIN_SETUP_EMAIL: "user@email.com"
       when: installed_pgadmin4.changed
 
     - name: Show website address
