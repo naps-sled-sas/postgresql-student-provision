@@ -6,32 +6,36 @@
       vars:
         postgresql_password: "{{ postgresql_password }}"
   tasks:
-  - name: Enable EPEL
-    ansible.builtin.dnf:
-      name: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'
-      state: present
+    - name: Enable EPEL
+      ansible.builtin.dnf:
+        name: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'
+        state: present
 
-  - name: Enable Pgadmin4 repository
-    ansible.builtin.dnf:
-      name: 'https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum/pgadmin4-redhat-repo-2-1.noarch.rpm'
-      state: present
+    - name: Enable Pgadmin4 repository
+      ansible.builtin.dnf:
+        name: 'https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum/pgadmin4-redhat-repo-2-1.noarch.rpm'
+        state: present
 
-  - name: Install Pgadmin4
-    ansible.builtin.dnf:
-      name: 'pgadmin4'
-      state: present
-      update_cache: true
-    register: installed_pgadmin4
+    - name: Install Pgadmin4
+      ansible.builtin.dnf:
+        name: 'pgadmin4'
+        state: present
+        update_cache: true
+      register: installed_pgadmin4
 
-  - name: Start and enable httpd
-    ansible.builtin.service:
-      name: httpd
-      enabled: yes
-      state: started
+    - name: Start and enable httpd
+      ansible.builtin.service:
+        name: httpd
+        enabled: yes
+        state: started
 
-  - name: Execute the command in remote shell; stdout goes to the specified file on the remote
-    ansible.builtin.shell: "/usr/pgadmin4/bin/setup-web.sh"
-    environment:
-      PGADMIN_SETUP_PASSWORD: "user@email.com"
-      PGADMIN_SETUP_EMAIL: "{{ postgresql_password }}"
-    when: installed_pgadmin4.changed
+    - name: Execute the command in remote shell; stdout goes to the specified file on the remote
+      ansible.builtin.shell: '/usr/pgadmin4/bin/setup-web.sh'
+      environment:
+        PGADMIN_SETUP_PASSWORD: "user@email.com"
+        PGADMIN_SETUP_EMAIL: "{{ postgresql_password }}"
+      when: installed_pgadmin4.changed
+
+    - name: Show website address
+      ansible.builtin.debug:
+        msg: "http://{{ ansible_host }}/pgadmin4"
