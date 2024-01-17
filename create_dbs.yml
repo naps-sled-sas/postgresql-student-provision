@@ -3,7 +3,6 @@
   become: true
   gather_facts: false
   vars:
-    students: "{{ ad_group_members }}"
     roles_to_ignore:
       - "postgres"
 

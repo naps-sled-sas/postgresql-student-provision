@@ -11,4 +11,4 @@
   - name: Set output as stat
     ansible.builtin.set_stats:
       data:
-        ad_group_members: "{{ ad_group_members.output }}"
+        students: "{{ ad_group_members.output }}"
