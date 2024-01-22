@@ -1,5 +1,5 @@
 - name: Setup postgres
-  hosts: postgresql
+  hosts: "{{ rhel_host }}" 
   become: true
   roles:
     - role: linux-system-roles.postgresql
