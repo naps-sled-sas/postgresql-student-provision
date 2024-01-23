@@ -4,7 +4,7 @@
   roles:
     - role: linux-system-roles.postgresql
       vars:
-        postgresql_password: "{{ postgresql_password }}"
+        postgresql_password: "{{ login_password }}"
   tasks:
     - name: Enable EPEL
       ansible.builtin.dnf:
@@ -32,7 +32,7 @@
     - name: Execute the command in remote shell; stdout goes to the specified file on the remote
       ansible.builtin.shell: '/usr/pgadmin4/bin/setup-web.sh'
       environment:
-        PGADMIN_SETUP_PASSWORD: "{{ postgresql_password }}"
+        PGADMIN_SETUP_PASSWORD: "{{ login_password }}"
         PGADMIN_SETUP_EMAIL: "user@email.com"
       when: installed_pgadmin4.changed
 
