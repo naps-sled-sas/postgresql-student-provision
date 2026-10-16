@@ -6,19 +6,26 @@
     roles_to_ignore:
       - "postgres"
 
+  # Connect over TCP on loopback instead of the unix socket. pg_hba.conf uses
+  # peer auth for local connections, which matches the OS user -- root, because
+  # of become -- against the database user and ignores the password entirely,
+  # so a socket connection as login_user can never succeed. 127.0.0.1 hits the
+  # scram-sha-256 host rule that setup_postgres.yml lays down.
+  module_defaults:
+    group/community.postgresql.all:
+      login_host: 127.0.0.1
+      login_user: "{{ login_user }}"
+      login_password: "{{ login_password }}"
+
   tasks:
   - name: Add needed student databases
     community.postgresql.postgresql_db:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
       name: "db-{{ item }}"
       state: "present"
     with_items: "{{ students }}"
 
   - name: Add needed student users
     community.postgresql.postgresql_user:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
       name: "{{ item }}"
       password: "{{ lookup('community.general.random_string', min_lower=1, min_upper=1, min_special=1, min_numeric=1) }}"
       state: "present"
@@ -27,8 +34,6 @@
 
   - name: Manage student privs
     community.postgresql.postgresql_privs:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
       db: "db-{{ item }}"
       privs: ALL
       role: "{{ item }}"
@@ -37,8 +42,6 @@
 
   - name: Collect all info
     community.postgresql.postgresql_info:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
       filter: "roles"
     register: postgres_info
 
@@ -52,16 +55,12 @@
 
   - name: Remove unneeded databases
     community.postgresql.postgresql_db:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
       name: "db-{{ item }}"
       state: "absent"
     with_items: "{{ roles_to_remove }}"
 
   - name: Remove unneeded student users
     community.postgresql.postgresql_user:
-      login_user: "{{ login_user }}"
-      login_password: "{{ login_password }}"
       name: "{{ item }}"
       state: "absent"
     with_items: "{{ roles_to_remove }}"
