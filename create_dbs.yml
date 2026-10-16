@@ -34,7 +34,6 @@
 
   - name: Manage student privs
     community.postgresql.postgresql_privs:
-      db: "db-{{ item }}"
       privs: ALL
       role: "{{ item }}"
       obj: ALL_IN_SCHEMA
