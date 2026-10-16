@@ -1,5 +1,5 @@
 - name: Sync Student DBs
-  hosts: postgresql
+  hosts: "{{ rhel_host | default('postgresql') }}"
   become: true
   gather_facts: false
   vars:
