@@ -57,6 +57,10 @@
     community.postgresql.postgresql_db:
       name: "db-{{ item }}"
       state: "absent"
+      # DROP DATABASE refuses to run while anyone is connected, and an idle
+      # pgAdmin or psql session is enough to block it. On PG13+ this becomes
+      # DROP DATABASE ... WITH (FORCE), which disconnects those sessions first.
+      force: true
     with_items: "{{ roles_to_remove }}"
 
   - name: Remove unneeded student users
