@@ -1,41 +1,213 @@
-- name: Setup postgres
-  hosts: "{{ rhel_host }}" 
+---
+# Step 1 of the student-provisioning workflow: turn a fresh RHEL 9 VM into a
+# PostgreSQL server with the pgAdmin 4 web UI in front of it, so the instructor
+# can inspect the result from a browser on their workstation.
+#
+# Follow-up playbooks (create_dbs.yml) connect over TCP as "{{ login_user }}",
+# so this playbook is also what makes those modules able to authenticate.
+
+- name: Set up PostgreSQL and the pgAdmin web console
+  hosts: "{{ rhel_host | default('postgresql') }}"
   become: true
+
+  vars:
+    # RHEL 9 ships 13 (default), 15 and 16 as appstream module streams.
+    postgres_version: "16"
+    postgres_superuser: "{{ login_user | default('postgres') }}"
+
+    # Networks allowed to reach 5432 directly, e.g. for pgAdmin Desktop or psql
+    # on your workstation: ["192.168.1.0/24"]. Left empty, PostgreSQL only
+    # listens on loopback and the web console is the way in.
+    postgres_client_networks: []
+
+    pgadmin_admin_email: "{{ login_user_email | default('admin@example.com') }}"
+    pgadmin_config_db: /var/lib/pgadmin/pgadmin4.db
+    pgadmin_servers_file: /var/lib/pgadmin/ansible-servers.json
+
+    postgres_listen_addresses: "{{ '*' if postgres_client_networks | length > 0 else 'localhost' }}"
+
+    # pgAdmin reaches PostgreSQL over TCP on loopback rather than the unix
+    # socket, so these host rules are required even with no remote clients.
+    pg_hba_local:
+      - type: local
+        database: all
+        user: all
+        auth_method: peer
+      - type: host
+        database: all
+        user: all
+        address: "127.0.0.1/32"
+        auth_method: scram-sha-256
+      - type: host
+        database: all
+        user: all
+        address: "::1/128"
+        auth_method: scram-sha-256
+
+  pre_tasks:
+    - name: Check that the required credentials were supplied
+      ansible.builtin.assert:
+        that:
+          - login_password is defined
+          - login_password | length > 0
+        fail_msg: >-
+          login_password must be set (AAP survey or vaulted var). It becomes the
+          password for both the PostgreSQL superuser and the pgAdmin login.
+
+    - name: Start from the loopback-only pg_hba rules
+      ansible.builtin.set_fact:
+        pg_hba_entries: "{{ pg_hba_local }}"
+
+    - name: Add a pg_hba rule for each permitted client network
+      ansible.builtin.set_fact:
+        pg_hba_entries: "{{ pg_hba_entries + [rule] }}"
+      vars:
+        rule:
+          type: host
+          database: all
+          user: all
+          address: "{{ item }}"
+          auth_method: scram-sha-256
+      loop: "{{ postgres_client_networks }}"
+
   roles:
     - role: linux-system-roles.postgresql
       vars:
+        postgresql_version: "{{ postgres_version }}"
         postgresql_password: "{{ login_password }}"
+        postgresql_pg_hba_conf: "{{ pg_hba_entries }}"
+        # Values land verbatim in postgresql.conf, hence the embedded quotes.
+        postgresql_server_conf:
+          listen_addresses: "'{{ postgres_listen_addresses }}'"
+          password_encryption: "'scram-sha-256'"
+
   tasks:
+    # The role only notifies a restart, so without this listen_addresses and
+    # pg_hba.conf would not take effect until the very end of the play.
+    - name: Apply the pending PostgreSQL restart
+      ansible.builtin.meta: flush_handlers
+
+    - name: Install the client library the postgresql modules need
+      ansible.builtin.dnf:
+        name: python3-psycopg2
+        state: present
+
+    # GPG checking is disabled only for these two release RPMs: their signing
+    # keys are not on the box yet, and installing them is what provides the key.
     - name: Enable EPEL
       ansible.builtin.dnf:
-        name: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
         state: present
+        disable_gpg_check: true
 
-    - name: Enable Pgadmin4 repository
+    - name: Enable the pgAdmin 4 repository
       ansible.builtin.dnf:
-        name: 'https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum/pgadmin4-redhat-repo-2-1.noarch.rpm'
+        name: https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum/pgadmin4-redhat-repo-2-1.noarch.rpm
         state: present
+        disable_gpg_check: true
 
-    - name: Install Pgadmin4
+    - name: Install pgAdmin 4 in web mode
       ansible.builtin.dnf:
-        name: 'pgadmin4'
+        name:
+          - pgadmin4-web
+          # setup-web.sh calls semanage to label /var/lib/pgadmin, and aborts
+          # without it.
+          - policycoreutils-python-utils
         state: present
         update_cache: true
-      register: installed_pgadmin4
 
-    - name: Start and enable httpd
+    # setup-web.sh creates the config database, sets the httpd SELinux booleans
+    # and file contexts, drops in the Apache conf, and starts httpd. It is
+    # interactive unless both env vars are set and --yes is passed.
+    - name: Configure pgAdmin for web mode
+      ansible.builtin.command:
+        cmd: /usr/pgadmin4/bin/setup-web.sh --yes
+        creates: "{{ pgadmin_config_db }}"
+      environment:
+        PGADMIN_SETUP_EMAIL: "{{ pgadmin_admin_email }}"
+        PGADMIN_SETUP_PASSWORD: "{{ login_password }}"
+      no_log: "{{ postgresql_secure_logging | default(true) }}"
+      register: pgadmin_setup
+
+    - name: Pre-register the local PostgreSQL server in pgAdmin
+      ansible.builtin.copy:
+        content: "{{ pgadmin_servers | to_nice_json }}"
+        dest: "{{ pgadmin_servers_file }}"
+        owner: apache
+        group: apache
+        mode: "0640"
+      vars:
+        pgadmin_servers:
+          Servers:
+            "1":
+              Name: "{{ inventory_hostname }}"
+              Group: Student Databases
+              Host: 127.0.0.1
+              Port: 5432
+              MaintenanceDB: postgres
+              Username: "{{ postgres_superuser }}"
+              ConnectionParameters:
+                sslmode: prefer
+                connect_timeout: 10
+      register: pgadmin_servers_json
+
+    - name: Import the server definition
+      ansible.builtin.command:
+        cmd: >-
+          /usr/pgadmin4/venv/bin/python3 /usr/pgadmin4/web/setup.py
+          load-servers {{ pgadmin_servers_file }}
+          --user {{ pgadmin_admin_email }}
+          --replace
+      when: pgadmin_setup is changed or pgadmin_servers_json is changed
+
+    # setup.py runs as root, so anything it touched needs handing back to httpd.
+    - name: Return the pgAdmin data directory to the apache user
+      ansible.builtin.file:
+        path: /var/lib/pgadmin
+        owner: apache
+        group: apache
+        recurse: true
+
+    - name: Start httpd and enable it at boot
       ansible.builtin.service:
         name: httpd
-        enabled: yes
+        enabled: true
         state: started
 
-    - name: Execute the command in remote shell; stdout goes to the specified file on the remote
-      ansible.builtin.shell: '/usr/pgadmin4/bin/setup-web.sh'
-      environment:
-        PGADMIN_SETUP_PASSWORD: "{{ login_password }}"
-        PGADMIN_SETUP_EMAIL: "user@email.com"
-      when: installed_pgadmin4.changed
+    - name: Find out whether firewalld manages this host
+      ansible.builtin.service_facts:
 
-    - name: Show website address
+    - name: Open the web console in the firewall
+      ansible.posix.firewalld:
+        service: http
+        permanent: true
+        immediate: true
+        state: enabled
+      when: "'firewalld.service' in ansible_facts.services"
+
+    - name: Open PostgreSQL in the firewall for direct client access
+      ansible.posix.firewalld:
+        port: 5432/tcp
+        permanent: true
+        immediate: true
+        state: enabled
+      when:
+        - "'firewalld.service' in ansible_facts.services"
+        - postgres_client_networks | length > 0
+
+    - name: Confirm the pgAdmin login page is being served
+      ansible.builtin.uri:
+        url: http://localhost/pgadmin4/login
+        status_code: 200
+      register: pgadmin_login_page
+      retries: 6
+      delay: 5
+      until: pgadmin_login_page is succeeded
+
+    - name: Show how to reach pgAdmin
       ansible.builtin.debug:
-        msg: "http://{{ ansible_host }}/pgadmin4"
+        msg:
+          - "pgAdmin: http://{{ ansible_host | default(inventory_hostname) }}/pgadmin4"
+          - "Sign in as {{ pgadmin_admin_email }} with the password supplied in login_password."
+          - "The '{{ inventory_hostname }}' server is pre-registered; connect as
+             {{ postgres_superuser }} using that same password."
