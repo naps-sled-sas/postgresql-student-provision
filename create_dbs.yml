@@ -38,6 +38,7 @@
       privs: ALL
       role: "{{ item }}"
       obj: ALL_IN_SCHEMA
+      login_db: "db-{{ item }}"
     with_items: "{{ students }}"
 
   - name: Collect all info
